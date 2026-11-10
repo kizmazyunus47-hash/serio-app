@@ -31,7 +31,7 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   int selectedIndex = 0;
 
-  final List<Widget> pages = [
+  final pages = [
     const HomePage(),
     const RankingPage(),
     const ProfilePage(),
@@ -76,9 +76,12 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   int punkte = 0;
+  int streak = 5;
+
+  final TextEditingController controller = TextEditingController();
 
   final List<Map<String, dynamic>> aufgaben = [
-    {"titel": "2h Lernen", "done": false},
+    {"titel": "2h lernen", "done": false},
     {"titel": "Fitness", "done": false},
     {"titel": "Buch lesen", "done": false},
   ];
@@ -86,8 +89,32 @@ class _HomePageState extends State<HomePage> {
   void toggleAufgabe(int index, bool? value) {
     setState(() {
       aufgaben[index]["done"] = value;
-      punkte = aufgaben.where((a) => a["done"]).length * 20;
+      punkte = aufgaben.where((a) => a["done"] == true).length * 25;
     });
+  }
+
+  void aufgabeHinzufuegen() {
+    if (controller.text.trim().isEmpty) return;
+
+    setState(() {
+      aufgaben.add({
+        "titel": controller.text,
+        "done": false,
+      });
+    });
+
+    controller.clear();
+  }
+
+  void aufgabeLoeschen(int index) {
+    setState(() {
+      aufgaben.removeAt(index);
+      punkte = aufgaben.where((a) => a["done"] == true).length * 25;
+    });
+  }
+
+  int get level {
+    return (punkte ~/ 100) + 1;
   }
 
   @override
@@ -96,21 +123,51 @@ class _HomePageState extends State<HomePage> {
       appBar: AppBar(
         title: const Text("Serio"),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          setState(() {
-            aufgaben.add({
-              "titel": "Neue Aufgabe",
-              "done": false,
-            });
-          });
-        },
-        child: const Icon(Icons.add),
-      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
+
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: Colors.indigo,
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Willkommen Yunus 👋",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+
+                  Text(
+                    "Level $level",
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                    ),
+                  ),
+
+                  Text(
+                    "🔥 Streak: $streak Tage",
+                    style: const TextStyle(
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(20),
@@ -124,21 +181,65 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                     const Text("Punkte"),
+
+                    const SizedBox(height: 10),
+
+                    LinearProgressIndicator(
+                      value: (punkte % 100) / 100,
+                    ),
                   ],
                 ),
               ),
             ),
+
             const SizedBox(height: 20),
+
+            Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: controller,
+                    decoration: const InputDecoration(
+                      labelText: "Neue Aufgabe",
+                      border: OutlineInputBorder(),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                ElevatedButton(
+                  onPressed: aufgabeHinzufuegen,
+                  child: const Icon(Icons.add),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 20),
+
             Expanded(
               child: ListView.builder(
                 itemCount: aufgaben.length,
                 itemBuilder: (context, index) {
-                  return CheckboxListTile(
-                    title: Text(aufgaben[index]["titel"]),
-                    value: aufgaben[index]["done"],
-                    onChanged: (value) {
-                      toggleAufgabe(index, value);
-                    },
+                  return Card(
+                    child: ListTile(
+                      leading: Checkbox(
+                        value: aufgaben[index]["done"],
+                        onChanged: (value) {
+                          toggleAufgabe(index, value);
+                        },
+                      ),
+                      title: Text(
+                        aufgaben[index]["titel"],
+                      ),
+                      trailing: IconButton(
+                        icon: const Icon(
+                          Icons.delete,
+                          color: Colors.red,
+                        ),
+                        onPressed: () {
+                          aufgabeLoeschen(index);
+                        },
+                      ),
+                    ),
                   );
                 },
               ),
@@ -157,29 +258,26 @@ class RankingPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Ranking"),
+        title: const Text("🏆 Ranking"),
       ),
-      body: const Padding(
-        padding: EdgeInsets.all(16),
-        child: Column(
-          children: [
-            ListTile(
-              leading: Icon(Icons.looks_one),
-              title: Text("Max"),
-              trailing: Text("260"),
-            ),
-            ListTile(
-              leading: Icon(Icons.looks_two),
-              title: Text("Yunus"),
-              trailing: Text("220"),
-            ),
-            ListTile(
-              leading: Icon(Icons.looks_3),
-              title: Text("Tim"),
-              trailing: Text("180"),
-            ),
-          ],
-        ),
+      body: ListView(
+        children: const [
+          ListTile(
+            leading: CircleAvatar(child: Text("1")),
+            title: Text("Max"),
+            trailing: Text("1240"),
+          ),
+          ListTile(
+            leading: CircleAvatar(child: Text("2")),
+            title: Text("Yunus"),
+            trailing: Text("980"),
+          ),
+          ListTile(
+            leading: CircleAvatar(child: Text("3")),
+            title: Text("Tim"),
+            trailing: Text("820"),
+          ),
+        ],
       ),
     );
   }
@@ -199,20 +297,25 @@ class ProfilePage extends StatelessWidget {
         child: Column(
           children: [
             CircleAvatar(
-              radius: 40,
-              child: Icon(Icons.person, size: 40),
+              radius: 50,
+              child: Icon(
+                Icons.person,
+                size: 50,
+              ),
             ),
             SizedBox(height: 20),
             Text(
               "Yunus",
               style: TextStyle(
-                fontSize: 25,
+                fontSize: 28,
                 fontWeight: FontWeight.bold,
               ),
             ),
             SizedBox(height: 10),
-            Text("Zuverlässigkeit: 100%"),
-            Text("Streak: 0 Tage"),
+            Text("Level 3"),
+            Text("Zuverlässigkeit: 92%"),
+            Text("Freunde: 12"),
+            Text("Streak: 5 Tage"),
           ],
         ),
       ),
